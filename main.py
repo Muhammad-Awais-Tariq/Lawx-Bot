@@ -23,6 +23,7 @@ async def on_ready():
     print("ready")
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def ban(ctx, members: commands.Greedy[discord.Member],
                    delete_days: typing.Optional[int] = 0, *,
                    reason: str):
@@ -35,6 +36,7 @@ async def ban(ctx, members: commands.Greedy[discord.Member],
         await member.ban(delete_message_seconds=delete_seconds, reason=reason)
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def kick(ctx, members: commands.Greedy[discord.Member],*, reason: str):
     for member in members:
         try:
@@ -44,6 +46,7 @@ async def kick(ctx, members: commands.Greedy[discord.Member],*, reason: str):
         await member.kick(reason=reason)
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def purge(ctx):
         await ctx.channel.delete()
         new_channel = await ctx.channel.clone(reason="Channel was purged")
@@ -51,6 +54,7 @@ async def purge(ctx):
         await new_channel.send("Channel was purged")
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def clear_messages(ctx ,num: int  = 5):
     try:
         deleted = await ctx.channel.purge(limit=num + 1)
@@ -65,6 +69,7 @@ async def timeout_member(ctx, member: discord.Member, minutes: int, *, reason: s
     await ctx.send(f"{member.mention} has been timed out for {minutes} minutes. Reason: {reason}")
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def timeout(ctx, member: discord.Member, minutes: int, *, reason: str = "No reason provided"):
     await timeout_member(ctx, member=member, minutes=minutes, reason=reason)
 
@@ -103,16 +108,19 @@ async def give_warning(member, channel):
         json.dump(data, f)
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def untimeout(ctx, member: discord.Member):
     await member.timeout(None)
     await ctx.send(f"The timeout for {member.mention} has been removed.")
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def warn(ctx, members: commands.Greedy[discord.Member]):
     for member in members:
         await give_warning(member, ctx.channel)
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def assign(ctx, member: discord.Member, role: discord.Role):
     try:
         await member.add_roles(role)
@@ -121,6 +129,7 @@ async def assign(ctx, member: discord.Member, role: discord.Role):
         await ctx.send("I don't have permission to assign this role.")
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def deafen(ctx, member: discord.Member):
     if not member.voice:
         await ctx.send("User is not in a voice channel.")
@@ -136,6 +145,7 @@ async def deafen(ctx, member: discord.Member):
 
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def undeafen(ctx, member: discord.Member):
     if not member.voice:
         await ctx.send("User is not in a voice channel.")
@@ -150,6 +160,7 @@ async def undeafen(ctx, member: discord.Member):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def mute(ctx, member: discord.Member):
     if not member.voice:
         await ctx.send("User is not in a voice channel.")
@@ -165,6 +176,7 @@ async def mute(ctx, member: discord.Member):
 
 
 @bot.command()
+@commands.has_any_role("🩸 Crib Mod", "Hoodie")
 async def unmute(ctx, member: discord.Member):
     if not member.voice:
         await ctx.send("User is not in a voice channel.")
@@ -198,6 +210,10 @@ async def on_message(message):
             break
 
     await bot.process_commands(message)
-    
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingAnyRole):
+        await ctx.send(f"{ctx.author.mention} you do not have permission to use this command.")   
 
 bot.run(token,log_handler=handler,log_level=logging.DEBUG)
