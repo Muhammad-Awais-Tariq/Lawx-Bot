@@ -55,4 +55,18 @@ async def clear_messages(ctx ,num: int  = 5):
         await ctx.send(f'Deleted {len(deleted)} messages.')
     except discord.errors.Forbidden:
         await ctx.send("I don't have the required permissions to delete messages.")
+
+@bot.event
+async def on_message(message): 
+    if message.author == bot.user:
+        return
+    with open("offensivewords.txt" , "r") as f:
+        words = f.readlines()
+        for word in words:
+            if word.replace("\n","") in message.content.lower():
+                await message.delete()
+                await message.channel.send(f"{message.author.mention} Do not use the word {word}")
+    
+    await bot.process_commands(message) 
+
 bot.run(token,log_handler=handler,log_level=logging.DEBUG)
