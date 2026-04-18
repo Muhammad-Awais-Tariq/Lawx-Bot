@@ -120,6 +120,64 @@ async def assign(ctx, member: discord.Member, role: discord.Role):
     except discord.Forbidden:
         await ctx.send("I don't have permission to assign this role.")
 
+@bot.command()
+async def deafen(ctx, member: discord.Member):
+    if not member.voice:
+        await ctx.send("User is not in a voice channel.")
+        return
+
+    try:
+        await member.edit(deafen=True)
+        await ctx.send(f"{member.mention} you have been deafened.")
+    except discord.Forbidden:
+        await ctx.send("I don't have permission to do that.")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+
+@bot.command()
+async def undeafen(ctx, member: discord.Member):
+    if not member.voice:
+        await ctx.send("User is not in a voice channel.")
+        return
+
+    try:
+        await member.edit(deafen=False)
+        await ctx.send(f"{member.mention} you have been undeafened.")
+    except discord.Forbidden:
+        await ctx.send("I don't have permission to do that.")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def mute(ctx, member: discord.Member):
+    if not member.voice:
+        await ctx.send("User is not in a voice channel.")
+        return
+
+    try:
+        await member.edit(mute=True)
+        await ctx.send(f"{member.mention} you have been muted.")
+    except discord.Forbidden:
+        await ctx.send("I don't have permission to do that.")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+
+@bot.command()
+async def unmute(ctx, member: discord.Member):
+    if not member.voice:
+        await ctx.send("User is not in a voice channel.")
+        return
+
+    try:
+        await member.edit(mute=False)
+        await ctx.send(f"{member.mention} you have been unmuted.")
+    except discord.Forbidden:
+        await ctx.send("I don't have permission to do that.")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
