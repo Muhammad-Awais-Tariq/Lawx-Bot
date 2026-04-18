@@ -6,6 +6,7 @@ import logging
 import typing
 import json
 import datetime
+import webserver
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
@@ -216,4 +217,5 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingAnyRole):
         await ctx.send(f"{ctx.author.mention} you do not have permission to use this command.")   
 
+webserver.keep_alive()
 bot.run(token,log_handler=handler,log_level=logging.DEBUG)
