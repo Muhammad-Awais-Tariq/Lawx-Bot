@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import os
 import logging
 import typing
+import json
+import datetime
 
 load_dotenv()
 token = os.getenv('DISCORD_TOKEN')
@@ -48,7 +50,7 @@ async def purge(ctx):
         await new_channel.edit(position=ctx.channel.position)
         await new_channel.send("Channel was purged")
 
-@bot.command(name='wipe')
+@bot.command()
 async def clear_messages(ctx ,num: int  = 5):
     try:
         deleted = await ctx.channel.purge(limit=num + 1)
@@ -56,17 +58,88 @@ async def clear_messages(ctx ,num: int  = 5):
     except discord.errors.Forbidden:
         await ctx.send("I don't have the required permissions to delete messages.")
 
+async def timeout_member(ctx, member: discord.Member, minutes: int, *, reason: str = "No reason provided"):
+    duration = datetime.timedelta(minutes=minutes)
+    
+    await member.timeout(duration, reason=reason)
+    await ctx.send(f"{member.mention} has been timed out for {minutes} minutes. Reason: {reason}")
+
+@bot.command()
+async def timeout(ctx, member: discord.Member, minutes: int, *, reason: str = "No reason provided"):
+    await timeout_member(ctx, member=member, minutes=minutes, reason=reason)
+
+async def give_warning(member, channel):
+    try:
+        with open("warning.json", "r") as f:
+            data = json.load(f)
+    except:
+        data = {}
+
+    user_id = str(member.id)
+
+    if user_id not in data:
+        data[user_id] = 0
+
+    data[user_id] += 1
+    count = data[user_id]
+
+    await channel.send(f"{member.mention} now has {count} warning(s)")
+
+    if count >= 3:
+        try:
+            await member.timeout(
+                datetime.timedelta(minutes=5),
+                reason="Reached 3 warnings"
+            )
+
+            await channel.send(f"{member.mention} has been timed out for 5 minutes")
+
+            data[user_id] = 0  
+
+        except Exception as e:
+            await channel.send("Timeout failed (check permissions / role hierarchy)")
+
+    with open("warning.json", "w") as f:
+        json.dump(data, f)
+
+@bot.command()
+async def untimeout(ctx, member: discord.Member):
+    await member.timeout(None)
+    await ctx.send(f"The timeout for {member.mention} has been removed.")
+
+@bot.command()
+async def warn(ctx, members: commands.Greedy[discord.Member]):
+    for member in members:
+        await give_warning(member, ctx.channel)
+
+@bot.command()
+async def assign(ctx, member: discord.Member, role: discord.Role):
+    try:
+        await member.add_roles(role)
+        await ctx.send(f"{member.mention} has been assigned {role.name}")
+    except discord.Forbidden:
+        await ctx.send("I don't have permission to assign this role.")
+
 @bot.event
-async def on_message(message): 
+async def on_message(message):
     if message.author == bot.user:
         return
-    with open("offensivewords.txt" , "r") as f:
-        words = f.readlines()
-        for word in words:
-            if word.replace("\n","") in message.content.lower():
-                await message.delete()
-                await message.channel.send(f"{message.author.mention} Do not use the word {word}")
+
+    with open("offensivewords.txt", "r") as f:
+        words = [w.strip().lower() for w in f.readlines()]
+
+    message_words = message.content.lower().split()
+
+    for word in words:
+        if word in message_words:
+            await message.delete()
+            await message.author.send(
+                f"{message.author.mention} Do not use the word {word}"
+            )
+            await give_warning(message.author, message.channel)
+            break
+
+    await bot.process_commands(message)
     
-    await bot.process_commands(message) 
 
 bot.run(token,log_handler=handler,log_level=logging.DEBUG)
